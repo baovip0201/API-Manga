@@ -12,10 +12,19 @@ module.exports = {
 
     getMangaById: async (req, res) => {
         try {
-            const manga = await Manga.findOne({ id_manga: req.params.id })
-            res.send(manga)
+                const manga = await Manga.findOne({ id_manga: req.params.id })
+                res.send(manga)
         } catch (err) {
             res.status(404).send({ message: 'Manga not found' });
+        }
+    },
+    searchManga: async (req, res) => {
+        try {
+            const searchQuery = req.params.q
+            const results = await Manga.find({ name_manga: { $regex: new RegExp(searchQuery, 'i') } })
+            res.send(results)
+        } catch (err) {
+            res.status(500).send({ message: err.message });
         }
     },
 
@@ -31,22 +40,19 @@ module.exports = {
                     avatar_manga: req.body.avatar_manga,
                     publish_manga: req.body.publish_manga,
                     view_manga: req.body.view_manga,
-                    genre_manga: [req.body.genre_manga],
-                    chapters_manga: [{
-                        id_chaper: req.body.id_chaper,
-                        name_chapter: req.body.name_chapter,
-                        url_img_chapter: [req.body.url_img_chapter]
-                    }]
+                    genre_manga: req.body.genre_manga,
+                    chapters_manga: req.body.chapters_manga
                 })
                 const savedManga = await newManga.save()
-                res.status(401).send(savedManga)
+                res.status(201).send(savedManga)
             } else {
-                return res.status(404).send({ message: 'Đã tồn tại id manga này' })
+                return res.status(400).send({ message: 'Manga ID already exists' })
             }
         } catch (err) {
             res.status(500).send({ message: err.message });
         }
     },
+
 
     updateManga: async (req, res) => {
         try {
@@ -88,5 +94,6 @@ module.exports = {
         } catch (err) {
             res.status(500).send({ message: err.message });
         }
-    }
+    },
+
 }
