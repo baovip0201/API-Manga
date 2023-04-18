@@ -12,8 +12,8 @@ module.exports = {
 
     getMangaById: async (req, res) => {
         try {
-                const manga = await Manga.findOne({ id_manga: req.params.id })
-                res.send(manga)
+            const manga = await Manga.findOne({ id_manga: req.params.id })
+            res.send(manga)
         } catch (err) {
             res.status(404).send({ message: 'Manga not found' });
         }
@@ -27,7 +27,6 @@ module.exports = {
             res.status(500).send({ message: err.message });
         }
     },
-
     createManga: async (req, res) => {
         try {
             const manga = await Manga.findOne({ id_manga: req.body.id_manga })
