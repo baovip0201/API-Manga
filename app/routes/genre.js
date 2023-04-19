@@ -4,12 +4,14 @@ const genreController=require('../controllers/genre')
 const bodyParser = require('body-parser');
 
 
-router.use(bodyParser.json())
+router.use(bodyParser.urlencoded({ extended: false, limit: '10mb' }))
+router.use(bodyParser.json({limit: '10mb'}))
+
 
 router.get('/', genreController.getAllGenre)
-router.get('/:id', genreController.getGenreById)
+router.get('/:genreId', genreController.getGenreById)
 router.post('/', genreController.createGenre)
-router.patch('/:id', genreController.updateGenre)
-router.delete('/:id',genreController.deleteGenre)
+router.patch('/:genreId', genreController.updateGenre)
+router.delete('/:genreId',genreController.deleteGenre)
 
 module.exports=router

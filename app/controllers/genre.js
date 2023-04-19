@@ -12,7 +12,7 @@ module.exports = {
 
     getGenreById: async (req, res) => {
         try {
-            const genre = await Genre.findOne({ genre_id: req.params.id })
+            const genre = await Genre.findOne({ genre_id: req.params.genreId })
             res.send(genre)
         } catch (err) {
             res.status(404).send({ message: 'Manga not found' });
@@ -20,11 +20,11 @@ module.exports = {
     },
     createGenre: async (req, res) => {
         try {
-            const genre = await Genre.findOne({ genre_id: req.body.genre_id })
+            const genre = await Genre.findOne({ genre_id: req.body.genreId })
             if (!genre) {
                 const newGenre = new Genre({
-                    genre_id: req.body.genre_id,
-                    genre_name: req.body.genre_name,
+                    genre_id: req.body.genreId,
+                    genre_name: req.body.genreName,
                     decription: req.body.description,
                 })
                 const savedGenre = await newGenre.save()
@@ -38,9 +38,9 @@ module.exports = {
     },
     updateGenre: async (req, res) => {
         try {
-            const genre = await Genre.findOne({ genre_id: req.params.id })
+            const genre = await Genre.findOne({ genre_id: req.params.genreId })
             if (req.body.genre_name) {
-                genre.genre_name = req.body.genre_name
+                genre.genre_name = req.body.genreName
             }
 
             if (req.body.description) {
@@ -56,7 +56,7 @@ module.exports = {
 
     deleteGenre: async (req, res) => {
         try {
-            await Genre.deleteOne({ genre_id: req.params.genre_id })
+            await Genre.deleteOne({ genre_id: req.params.genreId })
             res.send({ message: 'Genre deleted' });
         } catch (err) {
             res.status(500).send({ message: err.message });

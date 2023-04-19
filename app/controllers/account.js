@@ -60,7 +60,25 @@ module.exports = {
         }
     },
     updateAccount: async (req, res) => {
-
+        try {
+            const { name, bio } = req.body;
+            const username = req.params.username
+            const account = await Account.findOne({ username: username });
+            if (!account) {
+                return res.status(404).send({ message: "Tài khoản không tồn tại" });
+            }
+            const avatar = req.file ? req.file.path : account.avatar; // Nếu có tệp tin hình ảnh tải lên thì sử dụng đường dẫn tạm thời của nó, nếu không thì sử dụng đường dẫn avatar hiện tại
+            const updateAccount = await Account.findOneAndUpdate(
+                { username: username },
+                { name: name, bio: bio, avatar: avatar },
+                { new: true }
+            );
+            res.status(200).send(updateAccount);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ message: "Server Internal Error" });
+        }
     }
+    
 
 }
