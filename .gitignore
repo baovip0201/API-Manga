@@ -1,4 +1,5 @@
 .env
 node_modules
-tools
-downloads
+data.json
+app/controllers/comment-sub.js
+app/models/comment-sub.js

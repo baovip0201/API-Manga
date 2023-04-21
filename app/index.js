@@ -5,6 +5,7 @@ const routerManga=require('./routes/manga')
 const routerGenre=require('./routes/genre')
 const routerAccount=require('./routes/account')
 const routerComment=require('./routes/comment')
+const routerChapter=require('./routes/chapter')
 require('dotenv').config()
 const path=require('path')
 
@@ -21,6 +22,7 @@ app.use('/api/manga', routerManga)
 app.use('/api/genre', routerGenre)
 app.use('/api/account', routerAccount)
 app.use('/api/comment', routerComment)
+app.use('/api/chapter', routerChapter)
 
 app.listen(3000, () => {
     console.log('Server started on port 3000')

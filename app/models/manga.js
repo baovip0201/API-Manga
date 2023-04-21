@@ -1,24 +1,16 @@
 const {model, Schema}=require('mongoose')
 
 const mangaSchema= new Schema({
-    id_manga: {type: String, required: true},
-    name_manga: {type: String, required: true},
-    description_manga: {type: String},
-    author_manga: {type: String, required: true},
-    avatar_manga: {type: String, required: true},
-    publish_manga: {type: String},
-    genre_manga: {
+    mangaId: {type: String, required: true, unique: true},
+    mangaName: {type: String, required: true},
+    mangaDescription: {type: String},
+    mangaAuthor: {type: String, required: true},
+    mangaAvatar: {type: String, required: true},
+    mangaPublish: {type: String},
+    mangaGenres: {
         type: [String]
     },
-    view_manga: {type: Number},
-    chapters_manga: [{
-        id_chapter:{type: String, required: true},
-        name_chapter:{type: String, required: true},
-        url_img_chapter:[
-            {type: String, required: true}
-        ]
-    }]
+    mangaView: {type: Number},
 })
-
 
 module.exports=model('Manga', mangaSchema)

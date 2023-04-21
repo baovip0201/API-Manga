@@ -51,6 +51,7 @@ module.exports = {
                         password: hashPassword
                     })
                     await newUser.save()
+                    res.status(200).send({messgae: 'Tạo tài khoản thành công'})
                 }
             }
 
@@ -79,6 +80,7 @@ module.exports = {
             res.status(500).send({ message: "Server Internal Error" });
         }
     }
+
     
 
 }
