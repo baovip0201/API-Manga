@@ -12,6 +12,7 @@ router.get('/', mangaController.getAllManga)
 router.get('/:mangaId', mangaController.getMangaById)
 router.get('/search/:q', mangaController.searchManga)
 router.post('/', mangaController.createManga)
+router.post('/:mangaId/view', mangaController.viewManga)
 router.patch('/:mangaId', mangaController.updateManga)
 router.delete('/:mangaId',mangaController.deleteManga)
 

@@ -6,7 +6,8 @@ const accountSchema= new Schema({
     name: {type: String},
     avatar: {type: String},
     bio: {type: String},
-    email: {type: String, required: true}
+    email: {type: String, required: true},
+    role: {type: String, required: true, enum: ['admin','user'], default: 'user'}
 })
 
 

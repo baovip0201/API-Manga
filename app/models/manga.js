@@ -10,7 +10,7 @@ const mangaSchema= new Schema({
     mangaGenres: {
         type: [String]
     },
-    mangaView: {type: Number},
+    mangaView: {type: Number}
 })
 
 module.exports=model('Manga', mangaSchema)

@@ -9,7 +9,9 @@ module.exports = {
             res.status(500).send({ message: err.message });
         }
     },
-
+    getFansManga: async (req, res) => {
+        
+    },
     getMangaById: async (req, res) => {
         try {
             const manga = await Manga.findOne({ id_manga: req.params.mangaId })
@@ -50,7 +52,15 @@ module.exports = {
             res.status(500).send({ message: err.message });
         }
     },
-
+    viewManga: async (req, res)=>{
+        try {
+            const manga = await Manga.findOne({mangaId: req.params.mangaId})
+            manga.mangaView++
+            await manga.save()
+        } catch (error) {
+            res.status(500).send({ message: error.message });
+        }   
+    },
 
     updateManga: async (req, res) => {
         try {
