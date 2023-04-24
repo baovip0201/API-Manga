@@ -2,6 +2,7 @@ const Account = require('../models/account')
 const ResetPasswordToken = require('../models/reset-password-token')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 const nodemailer = require('nodemailer')
 const passport = require('passport')
 const moment = require('moment')
@@ -74,30 +75,103 @@ module.exports = {
         }
     },
     register: async (req, res) => {
+        const usernameRegex = /^[a-z0-9]+$/;
+        const emailRegex = /^\S+@\S+\.\S+$/;
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
         try {
             const { email, username, password, confirmPassword } = req.body
+
+            if (!usernameRegex.test(username.toLowerCase())) {
+                return res.status(400).send("Username must only contain lowercase alphanumeric characters.");
+            }
+            if (!emailRegex.test(email.toLowerCase())) {
+                return res.status(400).send("Invalid email format.");
+            }
+            if (!passwordRegex.test(password)) {
+                return res.status(400).send("Password must be at least 8 characters long and contain at least one letter, one number, and one special character.");
+            }
+            if (!passwordRegex.test(confirmPassword)) {
+                return res.status(400).send("Password must be at least 8 characters long and contain at least one letter, one number, and one special character.");
+            }
             if (password !== confirmPassword) {
-                return res.status(400).send({ message: "Hai mật khẩu không khớp" })
+                return res.status(400).send({ message: "Password and Confirm Password not match" })
             }
             const isUsernameExist = await Account.findOne({ username: username })
             if (isUsernameExist) {
-                return res.status(400).send({ message: "Username đã tồn tại" })
+                return res.status(400).send({ message: "Username exist" })
             } else {
                 const isEmailExist = await Account.findOne({ email: email })
                 if (isEmailExist) {
-                    return res.status(400).send({ message: "Email đã tồn tại" })
+                    return res.status(400).send({ message: "Email exist" })
                 } else {
+                    const token = crypto.randomBytes(32).toString('hex')
                     const hashPassword = bcrypt.hashSync(password, 10)
                     const newUser = new Account({
                         email: email,
                         username: username,
-                        password: hashPassword
+                        password: hashPassword,
+                        verifyToken: token
                     })
                     await newUser.save()
+
+                    const transporter = nodemailer.createTransport({
+                        host: 'smtp.gmail.com',
+                        port: 465,
+                        secure: true,
+                        auth: {
+                            user: process.env.EMAIL_USER,
+                            pass: process.env.EMAIL_PASS
+                        }
+                    });
+                    const mailOptions = {
+                        from: process.env.EMAIL_USER,
+                        to: newUser.email || '',
+                        subject: 'Verify Account',
+                        html: `
+                        <p>Xin chào ${newUser.username},</p>
+                        <p>Cảm ơn bạn đã đăng ký tài khoản trên trang web của chúng tôi.</p>
+                        <p>Vui lòng nhấn vào đường link sau để xác thực tài khoản:</p>
+                        <p><a href="http://localhost:3000/acount/verify/${token}">http://localhost:3000/account/verify/${token}</a></p>
+                        <p>Nếu bạn không phải là người đăng ký tài khoản, vui lòng bỏ qua email này.</p>
+                      `
+                    };
+                    transporter.sendMail(mailOptions, (error, info) => {
+                        if (error) {
+                            console.error(error);
+                            return res.status(500).json({ message: 'Internal server error' });
+                        } else {
+                            console.log('Email sent: ' + info.response);
+                            return res.status(200).json({ message: 'Verify account email has been sent' });
+                        }
+                    });
                     res.status(200).send({ messgae: 'Tạo tài khoản thành công' })
                 }
             }
 
+        } catch (error) {
+            console.error(error)
+            res.status(500).send({ message: "Server Internal Error" })
+        }
+    },
+    verifyAccountAfterRegister: async (req, res) => {
+        const { token } = req.params
+        try {
+            const user = await Account.findOne({ verifyToken: token })
+            if (!user) return res.status(400).send({ message: 'Invalid token' })
+            user.isVerified = true
+            user.verifyToken = undefined
+            await user.save()
+
+            const accessToken = jwt.sign(
+                {
+                    username: user.username,
+                    email: user.email,
+                    role: user.role
+                },
+                process.env.PRIVATE_KEY,
+                { expiresIn: "1h" })
+
+            return res.status(200).json({ message: 'Verification successful, ready auto login to website' , accessToken: accessToken});
         } catch (error) {
             console.error(error)
             res.status(500).send({ message: "Server Internal Error" })
@@ -121,6 +195,83 @@ module.exports = {
         } catch (error) {
             console.error(error);
             res.status(500).send({ message: "Server Internal Error" });
+        }
+    },
+    sendOtpToEmail: async (req, res) => {
+        const { username } = req.userData
+        try {
+            const user = await Account.findOne({ username: username })
+            if (!user) return res.status(400).json({ message: 'User not found' });
+
+            const otp = generateOtp()
+            user.otp = otp
+            await user.save()
+
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: user.email || '',
+                subject: 'OTP Verification',
+                text: `Your OTP is ${otp}`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error(error);
+                    return res.status(500).json({ message: 'Internal server error' });
+                } else {
+                    console.log('Email sent: ' + info.response);
+                    return res.status(200).json({ message: 'OTP Verification email has been sent' });
+                }
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    },
+    verifyOtp: async (req, res) => {
+
+        const { otp } = req.body;
+        const { username } = req.userData
+        try {
+            const user = await Account.findOne({ username: username, otp: otp })
+            if (!user) return res.status(400).json({ message: 'Invalid OTP' });
+            return res.status(200).json({ message: 'Verify success' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    },
+    changePassword: async (req, res) => {
+        const { newPassword } = req.body
+        const { username } = req.userData
+        try {
+            const user = await Account.findOne({ username: username })
+            if (!user) return res.status(400).json({ message: 'User not found' });
+            if (newPassword === '') return res.status(400).json({ message: 'Password cannot be blank' })
+            const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
+            if (!newPassword.match(passwordRegex)) {
+                return res.status(400).json({ message: 'New password is not valid' });
+            }
+
+            // Cập nhật mật khẩu mới và xoá OTP
+            user.password = await bcrypt.hash(newPassword, 10);
+            user.otp = null;
+            await user.save();
+
+            return res.status(200).json({ message: 'Password updated successfully' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Internal server error' });
         }
     },
     resetPassword: async (req, res) => {
@@ -212,6 +363,10 @@ module.exports = {
         }
 
     }
+}
 
+function generateOtp() {
+
+    return Math.floor(100000 + Math.random() * 900000).toString();
 
 }
