@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const genreController=require('../controllers/genre')
 const bodyParser = require('body-parser');
-const checkAuth=require('../middleware/auth')
+const checkAuth=require('../middleware/auth-token')
 const {checkPermissions}=require('../middleware/check-permission')
 
 

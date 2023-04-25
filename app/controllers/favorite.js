@@ -2,9 +2,9 @@ const Favorite = require('../models/favorite')
 
 module.exports = {
     getMangaFavoriteByUser: async (req, res) => {
-        const { username } = req.userData; // Lấy thông tin user từ token
+        const { userId } = req.userData; // Lấy thông tin user từ token
         try {
-            const favoriteMangas = await Favorite.find({ username: username });
+            const favoriteMangas = await Favorite.find({ userId: userId });
             res.status(200).send(favoriteMangas);
         } catch (error) {
             console.error(error);
@@ -22,12 +22,12 @@ module.exports = {
         }
     },
     addFavoriteManga: async (req, res) => {
-        const { username } = req.userData
+        const { userId } = req.userData
         const { mangaId } = req.body
         try {
             const newFavorite = new Favorite({
                 mangaId: mangaId,
-                username: username,
+                userId: userId,
                 createdAt: new Date.now()
             })
             await newFavorite.save()
@@ -37,10 +37,10 @@ module.exports = {
         }
     },
     removeFavorite: async (req, res) => {
-        const {username} = req.userData; // Lấy thông tin user từ token
+        const {userId} = req.userData; // Lấy thông tin user từ token
         const {mangaId} = req.params; // Lấy mangaId từ URL params
         try {
-            const favorite = await Favorite.findOneAndDelete({username: username, mangaId: mangaId});
+            const favorite = await Favorite.findOneAndDelete({userId: userId, mangaId: mangaId});
             if(favorite) {
                 res.status(200).send({message: "Removed from favorite list"});
             } else {

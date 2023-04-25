@@ -6,7 +6,7 @@ module.exports = {
     checkPermissions: (permissionName) => async (req, res, next) => {
         try {
             // Lấy thông tin role của user từ database
-            const user = await Account.findOne({username: req.userData.username});
+            const user = await Account.findOne({username: req.userData.userId});
             const role = user.role;
             // Kiểm tra quyền truy cập
             const permission = await Permission.findOne({ name: permissionName, role: role });

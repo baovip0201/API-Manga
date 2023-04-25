@@ -1,6 +1,7 @@
 const {model, Schema}=require('mongoose')
 
 const accountSchema= new Schema({
+    userId: {type: String, required: true, unique: true},
     username: {type: String, required: true, unique: true},
     password: {type: String, required: true},
     name: {type: String},

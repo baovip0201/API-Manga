@@ -27,9 +27,7 @@ module.exports = {
                 if (compare) {
                     const token = jwt.sign(
                         {
-                            username: data.username,
-                            email: data.email,
-                            role: data.role
+                            userId: data.userId
                         },
                         process.env.PRIVATE_KEY,
                         { expiresIn: "1h" })
@@ -107,6 +105,7 @@ module.exports = {
                     const token = crypto.randomBytes(32).toString('hex')
                     const hashPassword = bcrypt.hashSync(password, 10)
                     const newUser = new Account({
+                        userId: generateRandomID(),
                         email: email,
                         username: username,
                         password: hashPassword,
@@ -138,10 +137,10 @@ module.exports = {
                     transporter.sendMail(mailOptions, (error, info) => {
                         if (error) {
                             console.error(error);
-                            return res.status(500).json({ message: 'Internal server error' });
+                            return res.status(500).send({ message: 'Internal server error' });
                         } else {
                             console.log('Email sent: ' + info.response);
-                            return res.status(200).json({ message: 'Verify account email has been sent' });
+                            return res.status(200).send({ message: 'Verify account email has been sent' });
                         }
                     });
                     res.status(200).send({ messgae: 'Tạo tài khoản thành công' })
@@ -164,14 +163,12 @@ module.exports = {
 
             const accessToken = jwt.sign(
                 {
-                    username: user.username,
-                    email: user.email,
-                    role: user.role
+                    userId: user.userId,
                 },
                 process.env.PRIVATE_KEY,
                 { expiresIn: "1h" })
 
-            return res.status(200).json({ message: 'Verification successful, ready auto login to website' , accessToken: accessToken});
+            return res.status(200).send({ message: 'Verification successful, ready auto login to website' , accessToken: accessToken});
         } catch (error) {
             console.error(error)
             res.status(500).send({ message: "Server Internal Error" })
@@ -198,10 +195,10 @@ module.exports = {
         }
     },
     sendOtpToEmail: async (req, res) => {
-        const { username } = req.userData
+        const { userId } = req.userData
         try {
-            const user = await Account.findOne({ username: username })
-            if (!user) return res.status(400).json({ message: 'User not found' });
+            const user = await Account.findOne({ userId: userId })
+            if (!user) return res.status(400).send({ message: 'User not found' });
 
             const otp = generateOtp()
             user.otp = otp
@@ -227,40 +224,40 @@ module.exports = {
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                     console.error(error);
-                    return res.status(500).json({ message: 'Internal server error' });
+                    return res.status(500).send({ message: 'Internal server error' });
                 } else {
                     console.log('Email sent: ' + info.response);
-                    return res.status(200).json({ message: 'OTP Verification email has been sent' });
+                    return res.status(200).send({ message: 'OTP Verification email has been sent' });
                 }
             });
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(500).send({ message: 'Internal server error' });
         }
     },
     verifyOtp: async (req, res) => {
 
         const { otp } = req.body;
-        const { username } = req.userData
+        const { userId } = req.userData
         try {
-            const user = await Account.findOne({ username: username, otp: otp })
-            if (!user) return res.status(400).json({ message: 'Invalid OTP' });
-            return res.status(200).json({ message: 'Verify success' });
+            const user = await Account.findOne({ userId: userId, otp: otp })
+            if (!user) return res.status(400).send({ message: 'Invalid OTP' });
+            return res.status(200).send({ message: 'Verify success' });
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(500).send({ message: 'Internal server error' });
         }
     },
     changePassword: async (req, res) => {
         const { newPassword } = req.body
-        const { username } = req.userData
+        const { userId } = req.userData
         try {
-            const user = await Account.findOne({ username: username })
-            if (!user) return res.status(400).json({ message: 'User not found' });
-            if (newPassword === '') return res.status(400).json({ message: 'Password cannot be blank' })
+            const user = await Account.findOne({ userId: userId })
+            if (!user) return res.status(400).send({ message: 'User not found' });
+            if (newPassword === '') return res.status(400).send({ message: 'Password cannot be blank' })
             const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
             if (!newPassword.match(passwordRegex)) {
-                return res.status(400).json({ message: 'New password is not valid' });
+                return res.status(400).send({ message: 'New password is not valid' });
             }
 
             // Cập nhật mật khẩu mới và xoá OTP
@@ -268,10 +265,10 @@ module.exports = {
             user.otp = null;
             await user.save();
 
-            return res.status(200).json({ message: 'Password updated successfully' });
+            return res.status(200).send({ message: 'Password updated successfully' });
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(500).send({ message: 'Internal server error' });
         }
     },
     resetPassword: async (req, res) => {
@@ -281,7 +278,7 @@ module.exports = {
             // Tìm người dùng trong database bằng email hoặc username
             const user = await Account.findOne({ $or: [{ email: emailOrUsername }, { username: emailOrUsername }] });
             if (!user) {
-                return res.status(400).json({ message: 'User not found' });
+                return res.status(400).send({ message: 'User not found' });
             }
 
             // Tạo một mã reset password token ngẫu nhiên
@@ -290,7 +287,7 @@ module.exports = {
             // Lưu token vào database với thông tin người dùng và thời gian hết hạn
             const expires = moment().add(1, 'hours');
             const resetPasswordToken = new ResetPasswordToken({
-                username: user.username,
+                userId: user.userId,
                 token: token,
                 expires: expires.toDate()
             });
@@ -315,15 +312,15 @@ module.exports = {
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                     console.error(error);
-                    return res.status(500).json({ message: 'Internal server error' });
+                    return res.status(500).send({ message: 'Internal server error' });
                 } else {
                     console.log('Email sent: ' + info.response);
-                    return res.status(200).json({ message: 'Reset password email has been sent' });
+                    return res.status(200).send({ message: 'Reset password email has been sent' });
                 }
             });
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(500).send({ message: 'Internal server error' });
         }
     },
     resetPasswordToken: async (req, res) => {
@@ -334,7 +331,7 @@ module.exports = {
             // Kiểm tra xem token có hợp lệ hay không
             const resetPasswordToken = await ResetPasswordToken.findOne({ token: token });
             if (!resetPasswordToken) {
-                return res.status(400).json({ message: 'Invalid token' });
+                return res.status(400).send({ message: 'Invalid token' });
             }
 
             // Kiểm tra xem token đã hết hạn hay chưa
@@ -342,13 +339,13 @@ module.exports = {
             const expires = moment(resetPasswordToken.expires);
             if (now.isAfter(expires)) {
                 await resetPasswordToken.deleteOne();
-                return res.status(400).json({ message: 'Token has expired' });
+                return res.status(400).send({ message: 'Token has expired' });
             }
 
             // Cập nhật mật khẩu của người dùng
-            const user = await Account.findOne(resetPasswordToken.username);
+            const user = await Account.findOne({userId: resetPasswordToken.userId});
             if (!user) {
-                return res.status(400).json({ message: 'User not found' });
+                return res.status(400).send({ message: 'User not found' });
             }
             user.password = bcrypt.hashSync(password, 10);
             await user.save();
@@ -356,10 +353,10 @@ module.exports = {
             // Xóa token khỏi database
             await resetPasswordToken.deleteOne();
 
-            return res.status(200).json({ message: 'Password reset successfully' });
+            return res.status(200).send({ message: 'Password reset successfully' });
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: 'Internal server error' });
+            res.status(500).send({ message: 'Internal server error' });
         }
 
     }
@@ -370,3 +367,10 @@ function generateOtp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 
 }
+
+function generateRandomID() {
+    const min = 100000;
+    const max = 999999;
+    const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
+    return randomNum.toString();
+  }

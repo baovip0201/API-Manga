@@ -8,6 +8,8 @@ const routerComment=require('./routes/comment')
 const routerChapter=require('./routes/chapter')
 const routerFavorite=require('./routes/favorite')
 const routerPermission=require('./routes/permission')
+const routerRating=require('./routes/rating-manga')
+
 require('dotenv').config()
 const path=require('path')
 
@@ -27,6 +29,7 @@ app.use('/api/comment', routerComment)
 app.use('/api/chapter', routerChapter)
 app.use('/api/favorite', routerFavorite)
 app.use('/api/permission', routerPermission)
+app.use('/api/rating', routerRating)
 
 
 app.listen(3000, () => {

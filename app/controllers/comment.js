@@ -21,7 +21,7 @@ module.exports = {
 
       const commentsTree = mapComments(comments);
 
-      res.status(200).json({ comments: commentsTree });
+      res.status(200).send({ comments: commentsTree });
     } catch (error) {
       console.error(error);
       res.status(500).send({ message: "Lỗi nội bộ máy chủ" });
@@ -31,7 +31,7 @@ module.exports = {
     try {
       const { mangaId, chapterId } = req.params;
       const { commentText, parentCommentId } = req.body;
-      const { username } = req.userData;
+      const { userId } = req.userData;
 
       // Kiểm tra chapter
       const chapter = await Chapter.findOne({ mangaId, chapterId }).lean();
@@ -44,7 +44,7 @@ module.exports = {
       const comment = new Comment({
         commentId,
         commentText,
-        username,
+        userId,
         mangaId,
         chapterId,
         createdAt: new Date(),
@@ -70,7 +70,7 @@ module.exports = {
         return res.status(404).send({ message: "Comment not found" });
       }
 
-      if (comment.username !== req.userData.username) {
+      if (comment.userId !== req.userData.userId) {
         return res.status(401).send({ message: "Unauthorized" });
       }
 
@@ -91,7 +91,7 @@ module.exports = {
   deleteComment: async (req, res) => {
     try {
       const { commentId } = req.params;
-      const { username } = req.userData;
+      const { userId } = req.userData;
 
       const comment = await Comment.findOne({ commentId }).lean();
       if (!comment) {
@@ -99,7 +99,7 @@ module.exports = {
       }
 
       // Kiểm tra xem người dùng hiện tại có phải là người tạo comment hay không
-      if (comment.username !== username) {
+      if (comment.userId !== userId) {
         return res.status(401).send({ message: "Bạn không có quyền xóa comment này" });
       }
 

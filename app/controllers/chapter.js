@@ -1,4 +1,3 @@
-const chapter = require('../models/chapter')
 const Chapter = require('../models/chapter')
 const Manga = require('../models/manga')
 const fs=require('fs')

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const commentController=require('../controllers/comment')
 const bodyParser = require('body-parser');
-const checkAuth=require('../middleware/auth')
+const checkAuth=require('../middleware/auth-token')
 const checkPermissions=require('../middleware/check-permission')
 
 router.use(bodyParser.urlencoded({ extended: false, limit: '10mb' }))
