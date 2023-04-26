@@ -12,7 +12,7 @@ const accountSchema= new Schema({
     otp: {type: Number},
     verifyToken: {type: String},
     isVerified: {type: Boolean, default: false}
-})
+},{_id: false})
 
 
 module.exports=model('Account', accountSchema)

@@ -7,12 +7,16 @@ module.exports = {
       const { chapterId, mangaId } = req.params;
       const comments = await Comment.find({ chapterId, mangaId }).sort({ createdAt: 1 });
 
+
       // Ánh xạ các bình luận thành một đối tượng với phản hồi của chúng là một thuộc tính lồng nhau
       const mapComments = (comments, parentCommentId = null) => {
         return comments.reduce((acc, comment) => {
           if (comment.parentCommentId === parentCommentId) {
             const replies = mapComments(comments, comment.commentId);
-            const commentObj = { ...comment.toObject(), replies };
+            const commentObj = {
+              ...comment.toObject(),
+              replies
+            };
             acc.push(commentObj);
           }
           return acc;
@@ -23,8 +27,8 @@ module.exports = {
 
       res.status(200).send({ comments: commentsTree });
     } catch (error) {
-      console.error(error);
-      res.status(500).send({ message: "Lỗi nội bộ máy chủ" });
+      console.error(error)
+      res.status(500).send({ message: "Server Internal Error" })
     }
   },
   createComment: async (req, res) => {

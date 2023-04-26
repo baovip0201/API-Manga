@@ -7,7 +7,6 @@ module.exports = {
         try {
             const manga = await Manga.findOne({ mangaId: mangaId })
 
-
             const ratings = await Rating.aggregate([
                 { $match: { mangaId: mangaId } },
                 {
