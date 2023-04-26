@@ -1,6 +1,7 @@
+const { default: mongoose } = require('mongoose')
 const Chapter = require('../models/chapter')
 const Manga = require('../models/manga')
-const fs=require('fs')
+const fs = require('fs')
 
 module.exports = {
     getAllChaptersByMangaId: async (req, res) => {
@@ -16,8 +17,8 @@ module.exports = {
         try {
             const manga = await Manga.findOne({ mangaId: req.params.mangaId })
             if (!manga) return res.status(404).send({ message: 'Manga not found' })
-            const chapter = await Chapter.findOne({ chapterId: req.params.chapterId })
-            res.send(chapter)
+            const chapter = await Chapter.findOne({ _id: req.params.chapterId })
+            res.status(200).send(chapter)
         } catch (err) {
             res.status(404).send({ message: 'Chapter not found' });
         }
@@ -26,10 +27,7 @@ module.exports = {
         try {
             const manga = await Manga.findOne({ mangaId: req.body.mangaId })
             if (manga) {
-                const chapter = await Chapter.findOne({ chapterId: req.body.chapterId })
-                if (chapter) return res.status(401).send({ message: 'Chapter already exists' })
                 const newChapter = new Chapter({
-                    chapterId: req.body.chapterId,
                     mangaId: req.body.mangaId,
                     nameChapter: req.body.nameChapter,
                     urlImageChapter: req.body.urlImageChapter,
@@ -47,7 +45,7 @@ module.exports = {
 
     updateChapter: async (req, res) => {
         try {
-            const chapter = await Chapter.findOne({ chapterId: req.params.chapterId })
+            const chapter = await Chapter.findOne({ _id: req.params.chapterId })
             if (req.body.nameChapter) {
                 chapter.nameChapter = req.body.nameChapter
             }
@@ -62,24 +60,25 @@ module.exports = {
         }
     },
     getChaptersFromJson: async (req, res) => {
-        const files=fs.readFileSync('data.json')
-        const chapters=JSON.parse(files)
-        let result=[]
+        const files = fs.readFileSync('data.json')
+        const chapters = JSON.parse(files)
+        let result = []
         try {
-            for(let i=0; i<chapters.length; i++){
-                const newChapter= new Chapter(chapters[i])
+            for (let i = 0; i < chapters.length; i++) {
+                const newChapter = new Chapter({mangaId: chapters[i].mangaId, nameChapter: chapters[i].nameChapter, urlImageChapter: chapters[i].urlImageChapter })
                 await newChapter.save()
                 result.push(`${chapters[i].nameChapter}`)
             }
-            res.send({message: `${result}`})
+            res.send({ message: `${result}` })
         } catch (error) {
+            console.error(error)
             res.status(500).send('Internal Server Error')
         }
     },
 
     deleteChapter: async (req, res) => {
         try {
-            await Chapter.deleteOne({ chapterId: req.params.chapterId })
+            await Chapter.deleteOne({ _id: req.params.chapterId })
             res.send({ message: 'Chapter deleted' });
         } catch (err) {
             res.status(500).send({ message: err.message });

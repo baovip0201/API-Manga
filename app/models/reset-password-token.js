@@ -1,7 +1,7 @@
-const {model, Schema}=require('mongoose')
+const {model, Schema, default: mongoose}=require('mongoose')
 
 const resetPasswordSchema= new Schema({
-    userId: {type: String, required: true, ref: 'Account', localField: 'userId', foreignField: 'userId'},
+    userId: {type: mongoose.Types.ObjectId, required: true, ref: 'Account'},
     token: {type: String, required: true},
     expires: {type: Date, required: true}
 })

@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const Favorite = require('../models/favorite');
 const Manga = require('../models/manga')
 
@@ -6,12 +7,12 @@ module.exports = {
         const { userId } = req.userData; // Lấy thông tin user từ token
         try {
             const favoriteMangas = await Favorite.aggregate([
-                { $match: { userId: userId } },
+                { $match: { userId: new mongoose.Types.ObjectId(userId) } },
                 {
                     $lookup: {
                         from: "mangas",
                         localField: "mangaId",
-                        foreignField: "mangaId",
+                        foreignField: "_id",
                         as: "mangaDetails"
                     }
                 },
@@ -56,7 +57,7 @@ module.exports = {
         try {
             //const fansMangas = await Favorite.find({ mangaId: mangaId });
             const fansMangas = await Favorite.aggregate([
-                { $match: { mangaId: mangaId } },
+                {$match: { mangaId: new mongoose.Types.ObjectId(mangaId)}},
                 {
                     $group: {
                         _id: '$mangaId',
@@ -69,8 +70,10 @@ module.exports = {
                         mangaId: '$_id',
                         countFavorite: 1,
                     },
+                    
                 },
             ]);
+            //const fansMangas= await Favorite.estimatedDocumentCount({mangaId: mangaId})
             res.status(200).send(fansMangas);
         } catch (error) {
             console.error(error);

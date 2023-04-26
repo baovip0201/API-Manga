@@ -10,7 +10,7 @@ router.use(bodyParser.urlencoded({ extended: false, limit: '10mb' }))
 router.use(bodyParser.json({ limit: '10mb' }))
 
 
-router.get('/:mangaId', ratingController.getRating)
-router.post('/:mangaId', checkAuth, ratingController.createRating)
+router.get('/:mangaId', checkAuth, checkPermissions('read Rating'), ratingController.getRating)
+router.post('/:mangaId', checkAuth, checkPermissions('create Rating'), ratingController.createRating)
 
 module.exports = router

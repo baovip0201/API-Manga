@@ -6,6 +6,7 @@ const crypto = require('crypto')
 const nodemailer = require('nodemailer')
 const passport = require('passport')
 const moment = require('moment')
+const { Schema } = require('mongoose')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 require('dotenv').config()
 
@@ -27,7 +28,7 @@ module.exports = {
                 if (compare) {
                     const token = jwt.sign(
                         {
-                            userId: data.userId
+                            userId: data._id
                         },
                         process.env.PRIVATE_KEY,
                         { expiresIn: "1h" })
@@ -62,7 +63,8 @@ module.exports = {
                     const token = jwt.sign({
                         id: user.id,
                         name: user.displayName,
-                        email: user.emails[0].value
+                        email: user.emails[0].value,
+                        role: 'user'
                     }, process.env.PRIVATE_KEY, { expiresIn: '1h' })
                     res.status(200).send({ message: "Đăng nhập thành công bằng Google", token: token })
                 }
@@ -105,13 +107,13 @@ module.exports = {
                     const token = crypto.randomBytes(32).toString('hex')
                     const hashPassword = bcrypt.hashSync(password, 10)
                     const newUser = new Account({
-                        userId: generateRandomID(),
                         email: email,
                         username: username,
                         password: hashPassword,
                         verifyToken: token
                     })
                     await newUser.save()
+
 
                     const transporter = nodemailer.createTransport({
                         host: 'smtp.gmail.com',
@@ -130,7 +132,7 @@ module.exports = {
                         <p>Xin chào ${newUser.username},</p>
                         <p>Cảm ơn bạn đã đăng ký tài khoản trên trang web của chúng tôi.</p>
                         <p>Vui lòng nhấn vào đường link sau để xác thực tài khoản:</p>
-                        <p><a href="http://localhost:3000/acount/verify/${token}">http://localhost:3000/account/verify/${token}</a></p>
+                        <p><a href="http://localhost:3000/api/account/verify/${token}">http://localhost:3000/api/account/verify/${token}</a></p>
                         <p>Nếu bạn không phải là người đăng ký tài khoản, vui lòng bỏ qua email này.</p>
                       `
                     };
@@ -163,7 +165,7 @@ module.exports = {
 
             const accessToken = jwt.sign(
                 {
-                    userId: user.userId,
+                    userId: user._id,
                 },
                 process.env.PRIVATE_KEY,
                 { expiresIn: "1h" })
@@ -197,7 +199,7 @@ module.exports = {
     sendOtpToEmail: async (req, res) => {
         const { userId } = req.userData
         try {
-            const user = await Account.findOne({ userId: userId })
+            const user = await Account.findOne({_id: userId })
             if (!user) return res.status(400).send({ message: 'User not found' });
 
             const otp = generateOtp()
@@ -240,7 +242,7 @@ module.exports = {
         const { otp } = req.body;
         const { userId } = req.userData
         try {
-            const user = await Account.findOne({ userId: userId, otp: otp })
+            const user = await Account.findOne({ _id: userId, otp: otp })
             if (!user) return res.status(400).send({ message: 'Invalid OTP' });
             return res.status(200).send({ message: 'Verify success' });
         } catch (error) {
@@ -252,7 +254,7 @@ module.exports = {
         const { newPassword } = req.body
         const { userId } = req.userData
         try {
-            const user = await Account.findOne({ userId: userId })
+            const user = await Account.findOne({ _id: userId })
             if (!user) return res.status(400).send({ message: 'User not found' });
             if (newPassword === '') return res.status(400).send({ message: 'Password cannot be blank' })
             const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
@@ -287,7 +289,7 @@ module.exports = {
             // Lưu token vào database với thông tin người dùng và thời gian hết hạn
             const expires = moment().add(1, 'hours');
             const resetPasswordToken = new ResetPasswordToken({
-                userId: user.userId,
+                userId: user._id,
                 token: token,
                 expires: expires.toDate()
             });
@@ -343,7 +345,7 @@ module.exports = {
             }
 
             // Cập nhật mật khẩu của người dùng
-            const user = await Account.findOne({userId: resetPasswordToken.userId});
+            const user = await Account.findOne({_id: resetPasswordToken.userId});
             if (!user) {
                 return res.status(400).send({ message: 'User not found' });
             }
@@ -367,10 +369,3 @@ function generateOtp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 
 }
-
-function generateRandomID() {
-    const min = 100000;
-    const max = 999999;
-    const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-    return randomNum.toString();
-  }

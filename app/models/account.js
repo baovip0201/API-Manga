@@ -1,7 +1,6 @@
-const {model, Schema}=require('mongoose')
+const {model, Schema, mongoose}=require('mongoose')
 
 const accountSchema= new Schema({
-    userId: {type: String, required: true, unique: true},
     username: {type: String, required: true, unique: true},
     password: {type: String, required: true},
     name: {type: String},
@@ -12,7 +11,7 @@ const accountSchema= new Schema({
     otp: {type: Number},
     verifyToken: {type: String},
     isVerified: {type: Boolean, default: false}
-},{_id: false})
+})
 
 
 module.exports=model('Account', accountSchema)

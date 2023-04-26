@@ -1,12 +1,11 @@
-const {model, Schema}=require('mongoose')
+const {model, Schema, mongoose}=require('mongoose')
 
 const mangaSchema= new Schema({
-    mangaId: {type: String, required: true, unique: true},
     mangaName: {type: String, required: true},
     mangaDescription: {type: String},
     mangaAuthor: {type: String, required: true},
     mangaAvatar: {type: String, required: true},
-    mangaPublish: {type: String},
+    mangaPublish: {type: Date},
     mangaGenres: {
         type: [String]
     },

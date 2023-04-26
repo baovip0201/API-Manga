@@ -1,18 +1,20 @@
 const Comment = require('../models/comment');
 const Chapter = require('../models/chapter');
+const { default: mongoose } = require('mongoose');
 
 module.exports = {
   getAllComments: async (req, res) => {
     try {
       const { chapterId, mangaId } = req.params;
-      const comments = await Comment.find({ chapterId, mangaId }).sort({ createdAt: 1 });
+      const comments = await Comment.find({ chapterId: chapterId, mangaId: mangaId }).populate('user','username avatar').sort({ createdAt: 1 });
+      console.log(comments)
 
 
-      // Ánh xạ các bình luận thành một đối tượng với phản hồi của chúng là một thuộc tính lồng nhau
+      //Ánh xạ các bình luận thành một đối tượng với phản hồi của chúng là một thuộc tính lồng nhau
       const mapComments = (comments, parentCommentId = null) => {
         return comments.reduce((acc, comment) => {
           if (comment.parentCommentId === parentCommentId) {
-            const replies = mapComments(comments, comment.commentId);
+            const replies = mapComments(comments, comment._id);
             const commentObj = {
               ...comment.toObject(),
               replies
@@ -38,17 +40,14 @@ module.exports = {
       const { userId } = req.userData;
 
       // Kiểm tra chapter
-      const chapter = await Chapter.findOne({ mangaId, chapterId }).lean();
+      const chapter = await Chapter.findOne({mangaId: mangaId, _id: chapterId }).lean();
       if (!chapter) {
         return res.status(400).send({ message: "Manga hoặc chapter không hợp lệ" });
       }
 
-      // Tạo comment mới
-      const commentId = generateRandomID();
       const comment = new Comment({
-        commentId,
         commentText,
-        userId,
+        user: userId,
         mangaId,
         chapterId,
         createdAt: new Date(),
@@ -69,17 +68,19 @@ module.exports = {
       const { commentId } = req.params;
       const { commentText, parentCommentId } = req.body;
 
-      const comment = await Comment.findOne({ commentId: commentId });
+      const comment = await Comment.findOne({ _id: commentId });
       if (!comment) {
         return res.status(404).send({ message: "Comment not found" });
       }
 
-      if (comment.userId !== req.userData.userId) {
+      if (comment.user.toString() !== req.userData.userId) {
+        console.log(comment.user)
+        console.log(req.userData.userId)
         return res.status(401).send({ message: "Unauthorized" });
       }
 
       const updatedComment = await Comment.findOneAndUpdate(
-        { commentId: commentId, parentCommentId: parentCommentId },
+        { _id: commentId, parentCommentId: parentCommentId },
         { commentText: commentText, updatedAt: Date.now() },
         { new: true }
       );
@@ -97,28 +98,21 @@ module.exports = {
       const { commentId } = req.params;
       const { userId } = req.userData;
 
-      const comment = await Comment.findOne({ commentId }).lean();
+      const comment = await Comment.findOne({ _id: commentId }).lean();
       if (!comment) {
         return res.status(404).send({ message: "Không tìm thấy comment" });
       }
 
       // Kiểm tra xem người dùng hiện tại có phải là người tạo comment hay không
-      if (comment.userId !== userId) {
+      if (comment.user !== userId) {
         return res.status(401).send({ message: "Bạn không có quyền xóa comment này" });
       }
 
-      await Comment.findOneAndRemove({ commentId });
+      await Comment.findOneAndRemove({ _id: commentId });
       res.status(200).send({ message: "Xóa comment thành công" });
     } catch (error) {
       console.error(error);
       res.status(500).send({ message: "Server Internal Error" });
     }
   }
-}
-
-function generateRandomID() {
-  const min = 100000;
-  const max = 999999;
-  const randomNum = Math.floor(Math.random() * (max - min + 1) + min);
-  return randomNum.toString();
 }

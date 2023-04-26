@@ -1,8 +1,7 @@
-const {model, Schema}=require('mongoose')
+const {model, Schema, mongoose}=require('mongoose')
 const chapterSchema= new Schema({
-    chapterId: {type: String, required: true, unique: true},
-    mangaId: {type: String, ref: 'Manga', localField: 'mangaId', foreignField: 'mangaId',required: true},
-    updatedAt: {type: Date, required: true},
+    mangaId: {type: mongoose.Types.ObjectId, ref: 'Manga',required: true},
+    updatedAt: {type: Date},
     nameChapter: {type: String},
     urlImageChapter: {type: [String]},
 })

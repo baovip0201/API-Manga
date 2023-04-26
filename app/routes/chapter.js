@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const chapterController=require('../controllers/chapter')
 const bodyParser = require('body-parser');
+const {checkPermissions}=require('../middleware/check-permission')
 
 
 router.use(bodyParser.urlencoded({ extended: false, limit: '10mb' }))

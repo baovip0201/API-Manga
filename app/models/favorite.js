@@ -1,7 +1,7 @@
-const {model, Schema}=require('mongoose')
+const {model, Schema, default: mongoose}=require('mongoose')
 const favoriteSchema= new Schema({
-    mangaId: {type: String, ref: 'Manga', localField: 'mangaId', foreignField: 'mangaId',required: true},
-    userId: {type: String, ref: 'Account', localField: 'userId', foreignField: 'userId',required: true},
+    mangaId: {type: mongoose.Types.ObjectId, ref: 'Manga', required: true},
+    userId: {type: mongoose.Types.ObjectId, ref: 'Account', required: true},
     createdAt: {type: Date}
 })
 

@@ -4,6 +4,7 @@ const accountController = require('../controllers/account')
 const bodyParser = require('body-parser');
 const checkAuth = require('../middleware/auth-token')
 const upload = require('../middleware/upload-avatar')
+const {checkPermissions}=require('../middleware/check-permission')
 
 router.use(bodyParser.urlencoded({ extended: false, limit: '10mb' }))
 router.use(bodyParser.json({ limit: '10mb' }))

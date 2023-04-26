@@ -1,8 +1,8 @@
-const {model, Schema}=require('mongoose')
+const {model, Schema, default: mongoose}=require('mongoose')
 
 const ratingSchema= new Schema({
-    mangaId: {type: String, required: true, ref: 'Manga', localField: 'mangaId', foreignField: 'mangaId'},
-    userId: {type: String, required: true, ref: 'Account', localField: 'userId', foreignField: 'userId'},
+    mangaId: {type: mongoose.Types.ObjectId, required: true, ref: 'Manga', },
+    userId: {type: mongoose.Types.ObjectId, required: true, ref: 'Account',},
     star: {type : Number, min: 1, max: 5},
     createdAt: {type: Date}
 })

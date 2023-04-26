@@ -1,14 +1,15 @@
 const Rating = require('../models/rating-manga')
 const Manga = require('../models/manga')
+const { default: mongoose } = require('mongoose')
 
 module.exports = {
     getRating: async (req, res) => {
         const { mangaId } = req.params
         try {
-            const manga = await Manga.findOne({ mangaId: mangaId })
+            const manga = await Manga.findOne({ _id: mangaId })
 
             const ratings = await Rating.aggregate([
-                { $match: { mangaId: mangaId } },
+                { $match: { mangaId: new mongoose.Types.ObjectId(mangaId) } },
                 {
                   $group: {
                     _id: '$mangaId',
