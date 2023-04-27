@@ -13,13 +13,13 @@ router.post('/login', accountController.login)
 router.post('/register', accountController.register)
 router.post('/reset-password', accountController.resetPassword)
 router.post('/reset-password/:token', accountController.resetPasswordToken)
-router.post('/verifyOTP', checkAuth, checkPermissions('crate Account'), accountController.verifyOtp)
+router.post('/verifyOTP', checkAuth, checkPermissions('create Account'), accountController.verifyOtp)
 router.post('/change-password/', checkAuth, checkPermissions('create Account'), accountController.changePassword)
 
 router.get('/google', accountController.loginWithGoogle)
 router.get('/auth/google/callback', accountController.loginWithGoogleCallback)
 router.get('/sendOTP', checkAuth, checkPermissions('read Account'), accountController.sendOtpToEmail)
-router.get('/verify/:token', checkPermissions('read Account'), accountController.verifyAccountAfterRegister)
+router.get('/verify/:token', accountController.verifyAccountAfterRegister)
 
 router.patch('/', checkAuth, checkPermissions('update Account'), upload.single('avatar'), accountController.updateAccount)
 

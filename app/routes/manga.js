@@ -17,8 +17,8 @@ router.use(bodyParser.json({ limit: '10mb' }))
 router.get('/', checkAuth, checkPermissions('read Manga'), cache, mangaController.getAllManga)
 router.get('/:mangaId', checkAuth, checkPermissions('read Manga'), cache, mangaController.getMangaById)
 router.get('/search/:q', checkAuth, checkPermissions('read Manga'), cache, mangaController.searchManga)
+router.get('/:mangaId/view', checkAuth, checkPermissions('read Manga'), mangaController.viewManga)
 router.post('/', checkAuth, checkPermissions('create Manga'), mangaController.createManga)
-router.post('/:mangaId/view', checkAuth, checkPermissions('create Manga'), mangaController.viewManga)
 router.patch('/:mangaId', checkAuth, checkPermissions('update Manga'), mangaController.updateManga)
 router.delete('/:mangaId', checkAuth, checkPermissions('delete Manga'), mangaController.deleteManga)
 
@@ -35,13 +35,13 @@ router.post('/:mangaId/chapter/:chapterId/comment', checkAuth, checkPermissions(
 router.patch(':mangaId/chapter/:chapterId/comment/:commentId', checkAuth, checkPermissions('update Comment'), commentController.updateComment)
 router.delete('/:mangaId/chapter/:chapterId/comment/:commentId', checkAuth, checkPermissions('delete Comment'), commentController.deleteComment)
 
-router.get('/favorites', checkAuth, checkPermissions('read Favorite'), cache, favoriteController.getMangaFavoriteByUser)
+router.get('/favorites/user', checkAuth, checkPermissions('read Favorite'), cache, favoriteController.getMangaFavoriteByUser)
 router.get('/:mangaId/fans', checkAuth, checkPermissions('read Favorite'), cache, favoriteController.getFansManga)
-router.post('/favorite', checkAuth, checkPermissions('create Favorite'), favoriteController.addFavoriteManga)
+router.post('/favorite/user', checkAuth, checkPermissions('create Favorite'), favoriteController.addFavoriteManga)
 router.delete('/:mangaId/favorite', checkAuth, checkPermissions('delete Favorite'), favoriteController.removeFavorite)
 
-router.get('/:mangaId/ratings', checkAuth, cache, checkPermissions('read Rating'), ratingController.getRating)
-router.post('/:mangaId/rating', checkAuth, checkPermissions('create Rating'), ratingController.createRating)
+router.get('/:mangaId/ratings/user', checkAuth, cache, checkPermissions('read Rating'), ratingController.getRating)
+router.post('/:mangaId/rating/user', checkAuth, checkPermissions('create Rating'), ratingController.createRating)
 
 
 module.exports = router

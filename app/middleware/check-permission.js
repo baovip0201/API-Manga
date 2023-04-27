@@ -1,12 +1,12 @@
-const jwt = require('jsonwebtoken');
 const Account = require('../models/account');
 const Permission = require('../models/permission');
 
 module.exports = {
     checkPermissions: (permissionName) => async (req, res, next) => {
+        const {userId}= req.userData
         try {
             // Lấy thông tin role của user từ database
-            const user = await Account.findOne({username: req.userData.userId});
+            const user = await Account.findOne({_id: userId});
             const role = user.role;
             // Kiểm tra quyền truy cập
             const permission = await Permission.findOne({ name: permissionName, role: role });
