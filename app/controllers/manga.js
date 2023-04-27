@@ -1,4 +1,3 @@
-const { default: mongoose } = require('mongoose');
 const Manga = require('../models/manga')
 
 module.exports = {
@@ -11,9 +10,18 @@ module.exports = {
         }
     },
     getMangaById: async (req, res) => {
+        const { mangaId } = req.params
         try {
-            const manga = await Manga.findOne({_id: req.params.mangaId})
+            const manga = await Manga.findOne({ _id: mangaId })
             res.send(manga)
+        } catch (err) {
+            res.status(404).send({ message: 'Manga not found' });
+        }
+    },
+    getTopMangaByView: async (req, res) => {
+        try {
+            const topManga = await Manga.find().sort({ mangaView: -1 }).limit(20)
+            res.send(topManga)
         } catch (err) {
             res.status(404).send({ message: 'Manga not found' });
         }
@@ -28,37 +36,40 @@ module.exports = {
         }
     },
     createManga: async (req, res) => {
-        const { mangaName, mangaDescription, mangaAuthor, mangaAvatar, mangaPublish, mangaView, mangaGenres}=req.body
-        try {       
-                const newManga = new Manga({
-                    mangaName: mangaName,
-                    mangaDescription: mangaDescription,
-                    mangaAuthor: mangaAuthor,
-                    mangaAvatar: mangaAvatar,
-                    mangaPublish: mangaPublish,
-                    mangaView: mangaView,
-                    mangaGenres: mangaGenres
-                })
-                const savedManga = await newManga.save()
-                res.status(201).send(savedManga)
-            } 
-         catch (err) {
+        const { mangaName, mangaDescription, mangaAuthor, mangaAvatar, mangaPublish, mangaView, mangaGenres } = req.body
+        try {
+            const newManga = new Manga({
+                mangaName: mangaName,
+                mangaDescription: mangaDescription,
+                mangaAuthor: mangaAuthor,
+                mangaAvatar: mangaAvatar,
+                mangaPublish: mangaPublish,
+                mangaView: mangaView,
+                mangaGenres: mangaGenres
+            })
+            const savedManga = await newManga.save()
+            res.status(201).send(savedManga)
+        }
+        catch (err) {
             res.status(500).send({ message: err.message });
         }
     },
-    viewManga: async (req, res)=>{
+    viewManga: async (req, res) => {
+        const { mangaId } = req.params
         try {
-            const manga = await Manga.findOne({_id: req.params.mangaId})
+            const manga = await Manga.findOne({ _id: mangaId })
             manga.mangaView++
             await manga.save()
+            res.status(200).send({message: 'Views increased', data: manga})
         } catch (error) {
             res.status(500).send({ message: error.message });
-        }   
+        }
     },
 
     updateManga: async (req, res) => {
+        const { mangaId } = req.params
         try {
-            const manga = await Manga.findOne({ _id: req.params.mangaId })
+            const manga = await Manga.findOne({ _id: mangaId })
             if (req.body.name_manga) {
                 manga.mangaName = req.body.mangaName
             }
@@ -90,8 +101,9 @@ module.exports = {
     },
 
     deleteManga: async (req, res) => {
+        const { mangaId } = req.params
         try {
-            await Manga.deleteOne({ _id: req.params.mangaId })
+            await Manga.deleteOne({ _id: mangaId })
             res.send({ message: 'Manga deleted' });
         } catch (err) {
             res.status(500).send({ message: err.message });

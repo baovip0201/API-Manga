@@ -10,7 +10,8 @@ const accountSchema= new Schema({
     role: {type: String, required: true, enum: ['admin','user'], default: 'user'},
     otp: {type: Number},
     verifyToken: {type: String},
-    isVerified: {type: Boolean, default: false}
+    isVerified: {type: Boolean, default: false},
+    refreshToken: {type: String}
 })
 
 

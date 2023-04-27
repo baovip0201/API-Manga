@@ -6,9 +6,10 @@ const crypto = require('crypto')
 const nodemailer = require('nodemailer')
 const passport = require('passport')
 const moment = require('moment')
-const { Schema } = require('mongoose')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
+const cloudinary = require('cloudinary').v2
 require('dotenv').config()
+const path = require('path')
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -18,6 +19,12 @@ passport.use(new GoogleStrategy({
     return cb(null, profile)
 }))
 
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET
+})
+
 module.exports = {
     login: async (req, res) => {
         try {
@@ -26,16 +33,28 @@ module.exports = {
             if (data) {
                 const compare = bcrypt.compareSync(password, data.password)
                 if (compare) {
-                    const token = jwt.sign(
+                    const accessToken = jwt.sign(
                         {
-                            userId: data._id
+                            userId: data._id,
+                            role: data.role
                         },
                         process.env.PRIVATE_KEY,
-                        { expiresIn: "1h" })
+                        { expiresIn: "7d" })
+                    const refreshToken = jwt.sign({
+                        userId: data._id,
+                        role: data.role
+                    }, process.env.PRIVATE_KEY)
+
+                    data.refreshToken=refreshToken
+                    await data.save()
+
+                    res.cookie('refreshToken', refreshToken, { httpOnly: true })
+
                     res.status(200).send({
                         message: "Đăng nhập thành công",
-                        token: token
+                        accessToken: accessToken
                     })
+
                 } else {
                     res.status(500).send({ message: "Sai thông tin tài khoản/mật khẩu" })
                 }
@@ -45,6 +64,53 @@ module.exports = {
             res.status(500).send({ message: "Sai thông tin tài khoản/mật khẩu" })
         }
     },
+    refreshToken: async (req, res) => {
+        const { refreshToken } = req.cookies
+        try {
+            if (!refreshToken) {
+                return res.status(401).send({ message: 'refresh token not found' });
+            }
+
+            const user = await Account.findOne({ refreshToken: refreshToken });
+            if (!user) {
+                return res.status(401).send({ message: 'user not found' });
+            }
+
+            const decoded = jwt.verify(refreshToken, process.env.PRIVATE_KEY);
+            if (!decoded) {
+                return res.status(401).send({ message: 'invalid refresh token' });
+            }
+
+            const accessToken = jwt.sign({
+                userId: decoded.userId,
+                role: decoded.role
+            },
+                process.env.PRIVATE_KEY,
+                { expiresIn: "7d" });
+
+            const newRefreshToken = jwt.sign({
+                userId: decoded.userId,
+                role: decoded.role
+            }, process.env.PRIVATE_KEY);
+
+            const updatedUser = await Account.findOneAndUpdate(
+                { _id: user._id, refreshToken: refreshToken },
+                { refreshToken: newRefreshToken },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                return res.status(401).send({ message: 'failed to update refresh token' });
+            }
+
+            res.cookie('refreshToken', newRefreshToken, { httpOnly: true });
+            res.status(200).send({ message: "Refresh token successfully", accessToken: accessToken });
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ message: "Internal server error" });
+        }
+    },
+
     loginWithGoogle: async (req, res) => {
         try {
             passport.authenticate('google', { scope: ['profile', 'email'] })(req, res)
@@ -65,7 +131,7 @@ module.exports = {
                         name: user.displayName,
                         email: user.emails[0].value,
                         role: 'user'
-                    }, process.env.PRIVATE_KEY, { expiresIn: '1h' })
+                    }, process.env.PRIVATE_KEY, { expiresIn: '24h' })
                     res.status(200).send({ message: "Đăng nhập thành công bằng Google", token: token })
                 }
             })(req, res)
@@ -166,11 +232,12 @@ module.exports = {
             const accessToken = jwt.sign(
                 {
                     userId: user._id,
+                    role: user.role
                 },
                 process.env.PRIVATE_KEY,
-                { expiresIn: "1h" })
+                { expiresIn: "24h" })
 
-            return res.status(200).send({ message: 'Verification successful, ready auto login to website' , accessToken: accessToken});
+            return res.status(200).send({ message: 'Verification successful, ready auto login to website', accessToken: accessToken });
         } catch (error) {
             console.error(error)
             res.status(500).send({ message: "Server Internal Error" })
@@ -179,15 +246,19 @@ module.exports = {
     updateAccount: async (req, res) => {
         try {
             const { name, bio } = req.body;
-            const {userId} = req.userId
+            const { userId } = req.userData
             const account = await Account.findOne({ _id: userId });
             if (!account) {
                 return res.status(404).send({ message: "Tài khoản không tồn tại" });
             }
             const avatar = req.file ? req.file.path : account.avatar; // Nếu có tệp tin hình ảnh tải lên thì sử dụng đường dẫn tạm thời của nó, nếu không thì sử dụng đường dẫn avatar hiện tại
+            const publicId = path.basename(avatar, path.extname(avatar));
+            const result = await cloudinary.uploader.upload(avatar, { public_id: publicId, folder: 'Avatars' })
+            if (!result) return res.status(400).send('Lỗi upload lên cloudinary')
+            const urlAvatar = result.secure_url
             const updateAccount = await Account.findOneAndUpdate(
                 { _id: userId },
-                { name: name, bio: bio, avatar: avatar },
+                { name: name, bio: bio, avatar: urlAvatar },
                 { new: true }
             );
             res.status(200).send(updateAccount);
@@ -199,7 +270,7 @@ module.exports = {
     sendOtpToEmail: async (req, res) => {
         const { userId } = req.userData
         try {
-            const user = await Account.findOne({_id: userId })
+            const user = await Account.findOne({ _id: userId })
             if (!user) return res.status(400).send({ message: 'User not found' });
 
             const otp = generateOtp()
@@ -326,6 +397,7 @@ module.exports = {
         }
     },
     resetPasswordToken: async (req, res) => {
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
         try {
             const { password } = req.body;
             const { token } = req.params;
@@ -345,10 +417,15 @@ module.exports = {
             }
 
             // Cập nhật mật khẩu của người dùng
-            const user = await Account.findOne({_id: resetPasswordToken.userId});
+            const user = await Account.findOne({ _id: resetPasswordToken.userId });
             if (!user) {
                 return res.status(400).send({ message: 'User not found' });
             }
+
+            if (!passwordRegex.test(password)) {
+                return res.status(400).send("Password must be at least 8 characters long and contain at least one letter, one number, and one special character.");
+            }
+
             user.password = bcrypt.hashSync(password, 10);
             await user.save();
 

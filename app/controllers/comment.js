@@ -1,6 +1,5 @@
 const Comment = require('../models/comment');
 const Chapter = require('../models/chapter');
-const { default: mongoose } = require('mongoose');
 
 module.exports = {
   getAllComments: async (req, res) => {

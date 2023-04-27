@@ -1,4 +1,3 @@
-const { default: mongoose } = require('mongoose')
 const Chapter = require('../models/chapter')
 const Manga = require('../models/manga')
 const fs = require('fs')
@@ -48,7 +47,7 @@ module.exports = {
     updateChapter: async (req, res) => {
         const {mangaId, chapterId}=req.params
         try {
-            const chapter = await Chapter.findOne({ _id: chapterId })
+            const chapter = await Chapter.findOne({ _id: chapterId, mangaId: mangaId })
             if (req.body.nameChapter) {
                 chapter.nameChapter = req.body.nameChapter
             }
@@ -82,7 +81,7 @@ module.exports = {
     deleteChapter: async (req, res) => {
         const {chapterId, mangaId}=req.params
         try {
-            await Chapter.deleteOne({ _id: chapterId })
+            await Chapter.deleteOne({ _id: chapterId, mangaId: mangaId })
             res.send({ message: 'Chapter deleted' });
         } catch (err) {
             res.status(500).send({ message: err.message });

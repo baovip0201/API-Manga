@@ -1,4 +1,5 @@
 const Genre=require('../models/genre')
+const Manga= require('../models/manga')
 
 module.exports = {
     getAllGenre: async (req, res) => {
@@ -9,7 +10,15 @@ module.exports = {
             res.status(500).send({ message: err.message });
         }
     },
-
+    findMangaByGenre: async (req, res) => {
+        const {genreName}=req.params
+        try {
+            const mangas = await Manga.find({mangaGenres: {$in: [genreName]}})
+            res.status(200).send(mangas)
+        } catch (error) {
+            res.status(500).send({ message: error.message });
+        }
+    },
     getGenreById: async (req, res) => {
         try {
             const genre = await Genre.findOne({ _id: req.params.genreId })

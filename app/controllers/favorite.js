@@ -1,6 +1,5 @@
 const { default: mongoose } = require('mongoose');
 const Favorite = require('../models/favorite');
-const Manga = require('../models/manga')
 
 module.exports = {
     getMangaFavoriteByUser: async (req, res) => {

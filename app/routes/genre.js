@@ -11,10 +11,11 @@ router.use(bodyParser.urlencoded({ extended: false, limit: '10mb' }))
 router.use(bodyParser.json({ limit: '10mb' }))
 
 
-router.get('/', checkAuth, checkPermissions('read Genre'), cache, genreController.getAllGenre)
-router.get('/:genreId', checkAuth, checkPermissions('read Genre'), genreController.getGenreById)
-router.post('/', checkAuth, checkPermissions('create Genre'), genreController.createGenre)
-router.patch('/:genreId', checkAuth, checkPermissions('update Genre'), genreController.updateGenre)
-router.delete('/:genreId', checkAuth, checkPermissions('delete Genre'), genreController.deleteGenre)
+router.get('/', checkAuth, checkPermissions(['user', 'admin']), cache, genreController.getAllGenre)
+router.get('/:genreId', checkAuth, checkPermissions(['user', 'admin']), genreController.getGenreById)
+router.get('/find/:genreName', checkAuth, checkPermissions(['user', 'admin']), cache, genreController.findMangaByGenre)
+router.post('/', checkAuth, checkPermissions(['admin']), genreController.createGenre)
+router.patch('/:genreId', checkAuth, checkPermissions(['admin']), genreController.updateGenre)
+router.delete('/:genreId', checkAuth, checkPermissions(['admin']), genreController.deleteGenre)
 
 module.exports = router

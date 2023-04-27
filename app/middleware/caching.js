@@ -23,7 +23,7 @@ module.exports = {
 
             res.sendResponse = res.send
             res.send = (body) => {
-                client.setEx(key, 3600, JSON.stringify(body))
+                client.setEx(key, 60, JSON.stringify(body))
                 res.sendResponse(body)
             }
             next()
