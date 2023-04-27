@@ -45,7 +45,9 @@ module.exports = {
                         role: data.role
                     }, process.env.PRIVATE_KEY)
 
-                    data.refreshToken=refreshToken
+                    const hashRefreshToken = bcrypt.hashSync(refreshToken, 10)
+
+                    data.refreshToken = hashRefreshToken
                     await data.save()
 
                     res.cookie('refreshToken', refreshToken, { httpOnly: true })
@@ -65,49 +67,45 @@ module.exports = {
         }
     },
     refreshToken: async (req, res) => {
-        const { refreshToken } = req.cookies
+        const { refreshToken } = req.cookies;
+
         try {
             if (!refreshToken) {
-                return res.status(401).send({ message: 'refresh token not found' });
-            }
-
-            const user = await Account.findOne({ refreshToken: refreshToken });
-            if (!user) {
-                return res.status(401).send({ message: 'user not found' });
+                return res.status(401).json({ error: 'Refresh token not found' });
             }
 
             const decoded = jwt.verify(refreshToken, process.env.PRIVATE_KEY);
             if (!decoded) {
-                return res.status(401).send({ message: 'invalid refresh token' });
+                return res.status(401).json({ error: 'Invalid refresh token' });
             }
 
-            const accessToken = jwt.sign({
-                userId: decoded.userId,
-                role: decoded.role
-            },
-                process.env.PRIVATE_KEY,
-                { expiresIn: "7d" });
+            const { userId, role } = decoded;
+            const user = await Account.findOne({ _id: userId });
 
-            const newRefreshToken = jwt.sign({
-                userId: decoded.userId,
-                role: decoded.role
-            }, process.env.PRIVATE_KEY);
+            if (!user) {
+                return res.status(401).json({ error: 'User not found' });
+            }
 
-            const updatedUser = await Account.findOneAndUpdate(
-                { _id: user._id, refreshToken: refreshToken },
-                { refreshToken: newRefreshToken },
-                { new: true }
-            );
+            const isRefreshTokenMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+            if (!isRefreshTokenMatch) {
+                return res.status(401).json({ error: 'Refresh token not match' });
+            }
+
+            const accessToken = jwt.sign({ userId, role }, process.env.PRIVATE_KEY, { expiresIn: "7d" });
+            const newRefreshToken = jwt.sign({ userId, role }, process.env.PRIVATE_KEY);
+            const hashNewRefreshToken = bcrypt.hashSync(newRefreshToken, 10);
+
+            const updatedUser = await Account.findByIdAndUpdate(user._id, { refreshToken: hashNewRefreshToken }, { new: true });
 
             if (!updatedUser) {
-                return res.status(401).send({ message: 'failed to update refresh token' });
+                return res.status(401).json({ error: 'Failed to update refresh token' });
             }
 
             res.cookie('refreshToken', newRefreshToken, { httpOnly: true });
-            res.status(200).send({ message: "Refresh token successfully", accessToken: accessToken });
+            res.status(200).json({ message: 'Refresh token successfully', accessToken });
         } catch (error) {
             console.error(error);
-            res.status(500).send({ message: "Internal server error" });
+            res.status(500).json({ error: 'Internal server error' });
         }
     },
 
