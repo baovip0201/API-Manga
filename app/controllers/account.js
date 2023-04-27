@@ -179,14 +179,14 @@ module.exports = {
     updateAccount: async (req, res) => {
         try {
             const { name, bio } = req.body;
-            const username = req.params.username
-            const account = await Account.findOne({ username: username });
+            const {userId} = req.userId
+            const account = await Account.findOne({ _id: userId });
             if (!account) {
                 return res.status(404).send({ message: "Tài khoản không tồn tại" });
             }
             const avatar = req.file ? req.file.path : account.avatar; // Nếu có tệp tin hình ảnh tải lên thì sử dụng đường dẫn tạm thời của nó, nếu không thì sử dụng đường dẫn avatar hiện tại
             const updateAccount = await Account.findOneAndUpdate(
-                { username: username },
+                { _id: userId },
                 { name: name, bio: bio, avatar: avatar },
                 { new: true }
             );
@@ -365,7 +365,5 @@ module.exports = {
 }
 
 function generateOtp() {
-
     return Math.floor(100000 + Math.random() * 900000).toString();
-
 }
