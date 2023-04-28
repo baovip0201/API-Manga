@@ -16,7 +16,7 @@ module.exports = {
     getChapterById: async (req, res) => {
         const {mangaId, chapterId}=req.params
         try {
-            const manga = await Manga.findOne({ mangaId: mangaId })
+            const manga = await Manga.findOne({ _id: mangaId })
             if (!manga) return res.status(404).send({ message: 'Manga not found' })
             const chapter = await Chapter.findOne({ _id: chapterId })
             res.status(200).send(chapter)
@@ -27,7 +27,7 @@ module.exports = {
     createChapter: async (req, res) => {
         const {mangaId}=req.params
         try {
-            const manga = await Manga.findOne({ mangaId: mangaId })
+            const manga = await Manga.findOne({ _id: mangaId })
             if (manga) {
                 const newChapter = new Chapter({
                     mangaId: mangaId,

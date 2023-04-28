@@ -16,7 +16,7 @@ router.post('/login', accountController.login)
 router.post('/refresh-token', accountController.refreshToken)
 router.post('/register', accountController.register)
 router.post('/reset-password', accountController.resetPassword)
-router.post('/reset-password/:token', accountController.resetPasswordToken)
+router.post('/reset-password/token', accountController.resetPasswordToken)
 router.post('/verifyOTP', checkAuth, checkPermissions(['user', 'admin']), accountController.verifyOtp)
 router.post('/change-password/', checkAuth, checkPermissions(['user', 'admin']), accountController.changePassword)
 

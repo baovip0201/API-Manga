@@ -70,31 +70,31 @@ module.exports = {
         const { mangaId } = req.params
         try {
             const manga = await Manga.findOne({ _id: mangaId })
-            if (req.body.name_manga) {
+            if (req.body.mangaName) {
                 manga.mangaName = req.body.mangaName
             }
 
-            if (req.body.description_manga) {
+            if (req.body.mangaDescription) {
                 manga.mangaDescription = req.body.mangaDescription
             }
 
-            if (req.body.author_manga) {
+            if (req.body.mangaAuthor) {
                 manga.mangaAuthor = req.body.mangaAuthor
             }
 
-            if (req.body.avatar_manga) {
+            if (req.body.mangaAvatar) {
                 manga.mangaAvatar = req.body.mangaAvatar
             }
 
-            if (req.body.publish_manga) {
+            if (req.body.mangaPublish) {
                 manga.mangaPublish = req.body.mangaPublish
             }
 
-            if (req.body.genre_manga) {
+            if (req.body.mangaGenres) {
                 manga.mangaGenres = req.body.mangaGenres
             }
             const updatedManga = await manga.save()
-            res.send(updatedManga)
+            res.status(200).send(updatedManga)
         } catch (err) {
             res.status(500).send({ message: err.message });
         }

@@ -33,7 +33,9 @@ router.delete('/:mangaId/chapters', checkAuth, checkPermissions(['admin']), chap
 
 router.get('/:mangaId/chapter/:chapterId/comments', checkAuth, checkPermissions(['user', 'admin']), cache, commentController.getAllComments)
 router.post('/:mangaId/chapter/:chapterId/comment', checkAuth, checkPermissions(['user', 'admin']), commentController.createComment)
-router.patch(':mangaId/chapter/:chapterId/comment/:commentId', checkAuth, checkPermissions(['user', 'admin']), commentController.updateComment)
+router.post('/:mangaId/chapter/:chapterId/comment/:commentId/like', checkAuth, checkPermissions(['user', 'admin']), commentController.likeComment)
+router.post('/:mangaId/chapter/:chapterId/comment/:commentId/unlike', checkAuth, checkPermissions(['user', 'admin']), commentController.unlikeComment)
+router.patch('/:mangaId/chapter/:chapterId/comment/:commentId', checkAuth, checkPermissions(['user', 'admin']), commentController.updateComment)
 router.delete('/:mangaId/chapter/:chapterId/comment/:commentId', checkAuth, checkPermissions(['user', 'admin']), commentController.deleteComment)
 
 router.get('/favorites/user', checkAuth, checkPermissions(['user', 'admin']), cache, favoriteController.getMangaFavoriteByUser)

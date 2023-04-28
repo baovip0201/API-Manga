@@ -209,7 +209,7 @@ module.exports = {
                             return res.status(200).send({ message: 'Verify account email has been sent' });
                         }
                     });
-                    res.status(200).send({ messgae: 'Tạo tài khoản thành công' })
+                    //res.status(200).send({ message: 'Tạo tài khoản thành công' })
                 }
             }
 
@@ -398,7 +398,7 @@ module.exports = {
         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
         try {
             const { password } = req.body;
-            const { token } = req.params;
+            const { token } = req.query;
 
             // Kiểm tra xem token có hợp lệ hay không
             const resetPasswordToken = await ResetPasswordToken.findOne({ token: token });

@@ -26,16 +26,21 @@ module.exports = {
                   },
                 },
               ]);
-              
+            if(ratings.length===0) return res.status(200)
+            .send({
+                manga,
+                ratings: {
+                    avgStars: 0,
+                    count: 0
+                }
+            });
 
-            const avgStars = ratings[0].avgStars
-            const count = ratings[0].count
             return res.status(200)
                 .send({
                     manga,
                     ratings: {
-                        avgStars: avgStars || 0, // nếu chưa có đánh giá thì trả về 0
-                        count: count || 0 // nếu chưa có đánh giá thì trả về 0
+                        avgStars: ratings[0].avgStars,
+                        count: ratings[0].count
                     }
                 });
         } catch (error) {

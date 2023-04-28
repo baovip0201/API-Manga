@@ -1,5 +1,5 @@
-const Genre=require('../models/genre')
-const Manga= require('../models/manga')
+const Genre = require('../models/genre')
+const Manga = require('../models/manga')
 
 module.exports = {
     getAllGenre: async (req, res) => {
@@ -11,9 +11,9 @@ module.exports = {
         }
     },
     findMangaByGenre: async (req, res) => {
-        const {genreName}=req.params
+        const { genreName } = req.params
         try {
-            const mangas = await Manga.find({mangaGenres: {$in: [genreName]}})
+            const mangas = await Manga.find({ mangaGenres: { $in: [genreName] } })
             res.status(200).send(mangas)
         } catch (error) {
             res.status(500).send({ message: error.message });
@@ -29,17 +29,13 @@ module.exports = {
     },
     createGenre: async (req, res) => {
         try {
-            const genre = await Genre.findOne({ _id: req.body.genreId })
-            if (!genre) {
-                const newGenre = new Genre({
-                    genre_name: req.body.genreName,
-                    decription: req.body.description,
-                })
-                const savedGenre = await newGenre.save()
-                res.status(201).send(savedGenre)
-            } else {
-                return res.status(400).send({ message: 'Genre ID already exists' })
-            }
+            const newGenre = new Genre({
+                genreName: req.body.genreName,
+                decription: req.body.description,
+            })
+            const savedGenre = await newGenre.save()
+            res.status(201).send(savedGenre)
+
         } catch (err) {
             res.status(500).send({ message: err.message });
         }
